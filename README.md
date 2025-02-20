@@ -48,6 +48,20 @@ graph TD
     D -->|Updates| E[Event Records]
 ```
 
+### Key Features
+- Event Management
+- Create free or paid events
+- VIP and Regular ticket categories
+- Tickets issued as NFTs for security
+- Automated ticket pricing based on demand(Future Implementation)
+- Event discovery tools, including referral programs and discount codes (Future Implementation)
+
+### Payments & Refunds
+- Tickets purchased using XFI
+- Organizers pay a small platform service fee (30 XFI) for non-free events
+- Ticket payments held safely until the event ends
+- If an event is canceled, attendees get a refund plus a 2 XFI gas fee compensation from the organiser (Future Implementation)
+
 ### Revenue Management
 
 - XFI payments held in contract
@@ -57,8 +71,9 @@ graph TD
 
 ### Event Verification System
 
-- Organizer-controlled attendance marking
-- Bulk verification support
+- Attendance tracked through QR codes or wallet authentication
+- attendee-controlled their attendance marking
+- Bulk verification support by an attendee that registered for others(Future Implementation)
 - Attendance rate calculation
 - Revenue release conditions
 
