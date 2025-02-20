@@ -9,15 +9,6 @@
 3. `Types.sol`: Data structures and enums
 4. `Errors.sol`: Custom error definitions
 
-### Key Features Implementation
-
-#### Event Management
-
-- Event creation with flexible ticket types (FREE/PAID)
-- Ticket categories: Regular and VIP for paid events
-- Revenue management through XFI native token
-- Attendance tracking and verification system
-
 #### Security Measures
 
 - NonReentrant guard for payment functions
@@ -48,17 +39,24 @@ graph TD
     D -->|Updates| E[Event Records]
 ```
 
-### Key Features
-- Event Management
-- Create free or paid events
-- VIP and Regular ticket categories
+#### Authentication Flow
+- Web2-like auth flow during which an embedded evm wallet will be created for the users.
+- A web3 auth for guest users.
+- 
+### Key Features Implementations
+
+- Event creation with flexible ticket types (FREE/PAID)
+- Ticket categories: Regular and VIP for paid events
+- Revenue management through XFI native token
+- Attendance tracking and verification system
 - Tickets issued as NFTs for security
 - Automated ticket pricing based on demand(Future Implementation)
 - Event discovery tools, including referral programs and discount codes (Future Implementation)
+- Stablecoins payment (Future Implementation)
 
 ### Payments & Refunds
 - Tickets purchased using XFI
-- Organizers pay a small platform service fee (30 XFI) for non-free events
+- Organizers pay a small platform service fee (30 XFI) for paid events
 - Ticket payments held safely until the event ends
 - If an event is canceled, attendees get a refund plus a 2 XFI gas fee compensation from the organiser (Future Implementation)
 
