@@ -7,6 +7,20 @@ import "./libraries/Types.sol";
 import "./libraries/Errors.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
+/**
+ * @dev Implementation of a decentralized ticketing system for events.
+ *
+ * This contract enables event organizers to create and manage events with different
+ * ticket types (free, regular, VIP). It handles ticket sales, attendance verification,
+ * and revenue distribution based on attendance rates.
+ *
+ * Key features include:
+ * - Event creation and management
+ * - Multiple ticket types (FREE, REGULAR, VIP)
+ * - NFT-based ticket issuance
+ * - Attendance verification system
+ * - Revenue release mechanism with attendance thresholds
+ */
 contract Ticket_City is ReentrancyGuard {
     using Types for *;
     using Errors for *;
@@ -18,19 +32,48 @@ contract Ticket_City is ReentrancyGuard {
     uint public constant FREE_TICKET_PRICE = 0;
     uint256 public constant MINIMUM_ATTENDANCE_RATE = 60; // 60%
 
+    /**
+     * @dev Maps event IDs to their details
+     */
     mapping(uint256 => Types.EventDetails) public events;
-    mapping(address => mapping(uint256 => bool)) private hasRegistered;
+
+    /**
+     * @dev Tracks if an address has registered for a specific event
+     */
+    mapping(address => mapping(uint256 => bool)) public hasRegistered;
+
+    /**
+     * @dev Tracks revenue balance for organizers per event
+     */
     mapping(address => mapping(uint256 => uint256)) internal organiserRevBal;
+
+    /**
+     * @dev Maps event IDs to their ticket types and details
+     */
     mapping(uint256 => Types.TicketTypes) public eventTickets;
-    mapping(address => mapping(uint256 => bool)) private isVerified;
+
+    /**
+     * @dev Tracks attendance verification status for each address per event
+     */
+    mapping(address => mapping(uint256 => bool)) public isVerified;
+
+    /**
+     * @dev Tracks if revenue has been released for an event
+     */
     mapping(uint256 => bool) private revenueReleased;
 
+    /**
+     * @dev Emitted when a new event is organized
+     */
     event EventOrganized(
         address indexed _organiser,
         uint256 _eventId,
         Types.TicketType _ticketType
     );
 
+    /**
+     * @dev Emitted when a new ticket type is created for an event
+     */
     event TicketCreated(
         uint256 indexed _eventId,
         address indexed _organiser,
@@ -38,16 +81,28 @@ contract Ticket_City is ReentrancyGuard {
         uint256 _ticketFee,
         string _ticketType
     );
+
+    /**
+     * @dev Emitted when a ticket is purchased
+     */
     event TicketPurchased(
         uint256 indexed _eventId,
         address _buyer,
         uint256 _ticketFee
     );
+
+    /**
+     * @dev Emitted when an attendee's presence is verified
+     */
     event AttendeeVerified(
         uint256 indexed _eventId,
         address indexed _attendee,
         uint256 _verificationTime
     );
+
+    /**
+     * @dev Emitted when event revenue is released to organizer
+     */
     event RevenueReleased(
         uint256 indexed _eventId,
         address indexed _organiser,
@@ -56,11 +111,33 @@ contract Ticket_City is ReentrancyGuard {
         bool _manuallyReleased
     );
 
+    /**
+     * @dev Emitted when event revenue is released to organizer
+     */
+    event EtherReceived(address indexed _from, uint _amount);
+
+    /**
+     * @dev Sets the contract deployer as the owner
+     */
     constructor() payable {
         owner = payable(msg.sender);
     }
 
-    // utilities functions for tickects creation
+    /**
+     * @dev Allow the contract to receive ethers
+     */
+    receive() external payable {
+        emit EtherReceived(msg.sender, msg.value);
+    }
+
+    /**
+     * @dev Creates a new NFT ticket contract for an event
+     * @param _eventId The ID of the event
+     * @param _ticketFee The price of the ticket
+     * @param _ticketUri The URI for the ticket metadata
+     * @param _ticketType The type of ticket (FREE, REGULAR, or VIP)
+     * @return Address of the newly created ticket NFT contract
+     */
     function _createTicket(
         uint256 _eventId,
         uint256 _ticketFee,
@@ -81,6 +158,10 @@ contract Ticket_City is ReentrancyGuard {
         return newTicketNFT;
     }
 
+    /**
+     * @dev Validates event existence and organizer authorization
+     * @param _eventId The ID of the event to validate
+     */
     function _validateEventAndOrganizer(uint256 _eventId) internal view {
         if (msg.sender == address(0)) revert Errors.AddressZeroDetected();
         if (_eventId == 0 || _eventId > totalEventOrganised)
@@ -89,8 +170,16 @@ contract Ticket_City is ReentrancyGuard {
             revert Errors.OnlyOrganiserCanCreateTicket();
     }
 
-    // functions for updating blockchain state
-    function organizeEvent(
+    /**
+     * @dev Creates a new event
+     * @param _title Event title
+     * @param _desc Event description
+     * @param _startDate Event start timestamp
+     * @param _endDate Event end timestamp
+     * @param _expectedAttendees Expected number of attendees
+     * @param _ticketType Type of tickets for the event (FREE or PAID)
+     */
+    function createEvent(
         string memory _title,
         string memory _desc,
         uint256 _startDate,
@@ -282,7 +371,6 @@ contract Ticket_City is ReentrancyGuard {
             }
 
             if (msg.value != requiredFee) revert("Incorrect payment amount");
-
             // Transfer payment to contract
             (bool success, ) = address(this).call{value: msg.value}("");
             require(success, "Payment failed");
@@ -397,6 +485,10 @@ contract Ticket_City is ReentrancyGuard {
         bool hasValidTicket = false;
 
         // Check for regular ticket ownership
+        if (eventDetails.ticketType == Types.TicketType.FREE) {
+            hasValidTicket = true;
+        }
+
         if (
             tickets.hasRegularTicket && tickets.regularTicketNFT != address(0)
         ) {
@@ -447,7 +539,7 @@ contract Ticket_City is ReentrancyGuard {
             revert Errors.EventDoesNotExist();
         if (block.timestamp < eventDetails.startDate)
             revert Errors.EventNotStarted();
-        if (_attendees.length == 0) revert("Empty attendees list");
+        if (_attendees.length == 0) revert Errors.EmptyAttendeesList();
 
         // Get ticket information
         Types.TicketTypes storage tickets = eventTickets[_eventId];
