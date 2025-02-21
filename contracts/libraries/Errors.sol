@@ -22,6 +22,7 @@ library Errors {
     error NotRegisteredForEvent();
     error AlreadyVerified();
     error NotEventOrganizer();
+    error EmptyAttendeesList();
     error EventNotStarted();
     error EventHasNotEnded();
     error EventNotEnded();
