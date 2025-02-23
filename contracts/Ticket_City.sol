@@ -232,114 +232,105 @@ contract Ticket_City is ReentrancyGuard {
         emit EventOrganized(msg.sender, eventId, _ticketType);
     }
 
-    function createFreeTicket(
+    function createTicket(
         uint256 _eventId,
-        string memory _ticketUri
-    ) external {
-        _validateEventAndOrganizer(_eventId);
-
-        if (events[_eventId].ticketType != Types.TicketType.FREE)
-            revert Errors.FreeTicketForFreeEventOnly();
-
-        address newTicketNFT = _createTicket(
-            _eventId,
-            FREE_TICKET_PRICE,
-            _ticketUri,
-            "FREE"
-        );
-
-        totalTicketCreated + 1;
-
-        emit TicketCreated(
-            _eventId,
-            msg.sender,
-            newTicketNFT,
-            FREE_TICKET_PRICE,
-            "FREE"
-        );
-    }
-
-    function createRegularTicket(
-        uint256 _eventId,
+        Types.PaidTicketCategory _category,
         uint256 _ticketFee,
         string memory _ticketUri
     ) external {
         _validateEventAndOrganizer(_eventId);
 
         Types.EventDetails storage eventDetails = events[_eventId];
-        if (eventDetails.ticketType != Types.TicketType.PAID)
-            revert Errors.YouCanNotCreateThisTypeOfTicketForThisEvent();
-        if (_ticketFee == 0) revert Errors.InvalidTicketFee();
-
-        Types.TicketTypes storage tickets = eventTickets[_eventId];
-        // REGULAR ticket must not cost more than VIP ticket if it exists
-        if (tickets.hasVIPTicket && _ticketFee >= tickets.vipTicketFee)
-            revert Errors.RegularTicketMustCostLessThanVipTicket();
-        if (tickets.hasRegularTicket) revert("Regular tickets already created");
-
-        address newTicketNFT = _createTicket(
-            _eventId,
-            _ticketFee,
-            _ticketUri,
-            "REGULAR"
-        );
-
-        // Update ticket tracking
-        tickets.hasRegularTicket = true;
-        tickets.regularTicketFee = _ticketFee;
-        tickets.regularTicketNFT = newTicketNFT;
-
-        totalTicketCreated + 1;
-
-        emit TicketCreated(
-            _eventId,
-            msg.sender,
-            newTicketNFT,
-            _ticketFee,
-            "REGULAR"
-        );
-    }
-
-    function createVIPTicket(
-        uint256 _eventId,
-        uint256 _ticketFee,
-        string memory _ticketUri
-    ) external {
-        _validateEventAndOrganizer(_eventId);
-
-        Types.EventDetails storage eventDetails = events[_eventId];
-        if (eventDetails.ticketType != Types.TicketType.PAID)
-            revert Errors.YouCanNotCreateThisTypeOfTicketForThisEvent();
-
         Types.TicketTypes storage tickets = eventTickets[_eventId];
 
-        // VIP ticket must cost more than regular ticket if it exists
-        if (tickets.hasRegularTicket && _ticketFee <= tickets.regularTicketFee)
-            revert Errors.VipFeeTooLow();
+        // Handle FREE tickets
+        if (_category == Types.PaidTicketCategory.NONE) {
+            if (eventDetails.ticketType != Types.TicketType.FREE) {
+                revert Errors.FreeTicketForFreeEventOnly();
+            }
+
+            address newTicketNFT = _createTicket(
+                _eventId,
+                FREE_TICKET_PRICE,
+                _ticketUri,
+                "FREE"
+            );
+
+            totalTicketCreated++;
+
+            emit TicketCreated(
+                _eventId,
+                msg.sender,
+                newTicketNFT,
+                FREE_TICKET_PRICE,
+                "FREE"
+            );
+            return;
+        }
+
+        // Handle PAID tickets
+        if (eventDetails.ticketType != Types.TicketType.PAID) {
+            revert Errors.YouCanNotCreateThisTypeOfTicketForThisEvent();
+        }
         if (_ticketFee == 0) revert Errors.InvalidTicketFee();
-        if (tickets.hasVIPTicket) revert("VIP tickets already created");
 
-        address newTicketNFT = _createTicket(
-            _eventId,
-            _ticketFee,
-            _ticketUri,
-            "VIP"
-        );
+        if (_category == Types.PaidTicketCategory.REGULAR) {
+            if (tickets.hasRegularTicket)
+                revert("Regular tickets already created");
+            if (tickets.hasVIPTicket && _ticketFee >= tickets.vipTicketFee) {
+                revert Errors.RegularTicketMustCostLessThanVipTicket();
+            }
 
-        // Update ticket tracking
-        tickets.hasVIPTicket = true;
-        tickets.vipTicketFee = _ticketFee;
-        tickets.vipTicketNFT = newTicketNFT;
+            address newTicketNFT = _createTicket(
+                _eventId,
+                _ticketFee,
+                _ticketUri,
+                "REGULAR"
+            );
 
-        totalTicketCreated + 1;
+            tickets.hasRegularTicket = true;
+            tickets.regularTicketFee = _ticketFee;
+            tickets.regularTicketNFT = newTicketNFT;
 
-        emit TicketCreated(
-            _eventId,
-            msg.sender,
-            newTicketNFT,
-            _ticketFee,
-            "VIP"
-        );
+            totalTicketCreated++;
+
+            emit TicketCreated(
+                _eventId,
+                msg.sender,
+                newTicketNFT,
+                _ticketFee,
+                "REGULAR"
+            );
+        } else if (_category == Types.PaidTicketCategory.VIP) {
+            if (tickets.hasVIPTicket) revert("VIP tickets already created");
+            if (
+                tickets.hasRegularTicket &&
+                _ticketFee <= tickets.regularTicketFee
+            ) {
+                revert Errors.VipFeeTooLow();
+            }
+
+            address newTicketNFT = _createTicket(
+                _eventId,
+                _ticketFee,
+                _ticketUri,
+                "VIP"
+            );
+
+            tickets.hasVIPTicket = true;
+            tickets.vipTicketFee = _ticketFee;
+            tickets.vipTicketNFT = newTicketNFT;
+
+            totalTicketCreated++;
+
+            emit TicketCreated(
+                _eventId,
+                msg.sender,
+                newTicketNFT,
+                _ticketFee,
+                "VIP"
+            );
+        }
     }
 
     function purchaseTicket(
