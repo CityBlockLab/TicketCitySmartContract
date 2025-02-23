@@ -32,6 +32,8 @@ describe("Ticket_City", () => {
     const eventParams = {
       title: "Test Event",
       desc: "Test Description",
+      imageUri: "ipfs://event-banner",
+      location: "Test Location",
       startDate: startDate,
       endDate: endDate,
       expectedAttendees: 100,
@@ -78,6 +80,8 @@ describe("Ticket_City", () => {
           .createEvent(
             eventParams.title,
             eventParams.desc,
+            eventParams.imageUri,
+            eventParams.location,
             eventParams.startDate,
             eventParams.endDate,
             eventParams.expectedAttendees,
@@ -102,6 +106,8 @@ describe("Ticket_City", () => {
           .createEvent(
             eventParams.title,
             eventParams.desc,
+            eventParams.imageUri,
+            eventParams.location,
             invalidStartDate,
             eventParams.endDate,
             eventParams.expectedAttendees,
@@ -119,6 +125,8 @@ describe("Ticket_City", () => {
         ticketCity.connect(organizer).createEvent(
           eventParams.title,
           eventParams.desc,
+          eventParams.imageUri,
+          eventParams.location,
           eventParams.startDate,
           eventParams.endDate,
           0, // Invalid expected attendees
@@ -139,6 +147,8 @@ describe("Ticket_City", () => {
         .createEvent(
           eventParams.title,
           eventParams.desc,
+          eventParams.imageUri,
+          eventParams.location,
           eventParams.startDate,
           eventParams.endDate,
           eventParams.expectedAttendees,
@@ -184,6 +194,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -234,6 +246,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -265,6 +279,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -302,6 +318,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -351,6 +369,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -394,6 +414,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -429,6 +451,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -450,6 +474,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -486,6 +512,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -529,6 +557,8 @@ describe("Ticket_City", () => {
         .createEvent(
           eventParams.title,
           eventParams.desc,
+          eventParams.imageUri,
+          eventParams.location,
           eventParams.startDate,
           eventParams.endDate,
           eventParams.expectedAttendees,
@@ -564,6 +594,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -648,6 +680,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -703,6 +737,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -752,6 +788,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -802,6 +840,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -831,6 +871,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -889,6 +931,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,

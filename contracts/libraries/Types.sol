@@ -16,6 +16,8 @@ library Types {
     struct EventDetails {
         string title;
         string desc;
+        string imageUri;
+        string location;
         uint256 startDate;
         uint256 endDate;
         uint256 expectedAttendees;
@@ -26,7 +28,6 @@ library Types {
         uint256 ticketFee;
         address ticketNFTAddr;
         address organiser;
-
     }
 
     struct TicketTypes {

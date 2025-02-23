@@ -32,6 +32,8 @@ contract Ticket_City is ReentrancyGuard {
     uint public constant FREE_TICKET_PRICE = 0;
     uint256 public constant MINIMUM_ATTENDANCE_RATE = 60; // 60%
 
+    Types.EventDetails[] private allEvents;
+
     /**
      * @dev Maps event IDs to their details
      */
@@ -182,6 +184,8 @@ contract Ticket_City is ReentrancyGuard {
     function createEvent(
         string memory _title,
         string memory _desc,
+        string memory _imageUri,
+        string memory _location,
         uint256 _startDate,
         uint256 _endDate,
         uint256 _expectedAttendees,
@@ -201,6 +205,8 @@ contract Ticket_City is ReentrancyGuard {
         Types.EventDetails storage eventDetails = events[eventId];
         eventDetails.title = _title;
         eventDetails.desc = _desc;
+        eventDetails.imageUri = _imageUri;
+        eventDetails.location = _location;
         eventDetails.startDate = _startDate;
         eventDetails.endDate = _endDate;
         eventDetails.expectedAttendees = _expectedAttendees;
@@ -220,6 +226,8 @@ contract Ticket_City is ReentrancyGuard {
         }
 
         eventDetails.organiser = msg.sender;
+
+        allEvents.push(eventDetails);
 
         emit EventOrganized(msg.sender, eventId, _ticketType);
     }
@@ -646,6 +654,22 @@ contract Ticket_City is ReentrancyGuard {
             attendanceRate,
             msg.sender == owner
         );
+    }
+
+    // Getter functions
+    // View functions to get an event and all events
+    function getEvent(
+        uint256 _eventId
+    ) public view returns (Types.EventDetails memory eventDetails) {
+        return eventDetails = events[_eventId];
+    }
+
+    function getAllEvents()
+        external
+        view
+        returns (Types.EventDetails[] memory)
+    {
+        return allEvents;
     }
 
     // View function to check if revenue can be automatically released
