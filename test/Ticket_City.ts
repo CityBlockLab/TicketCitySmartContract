@@ -18,20 +18,19 @@ describe("Ticket_City", () => {
       unregisteredAttendee,
     ] = await hre.ethers.getSigners();
 
-    // Deploy Ticket_City contract
     const TicketCity = await hre.ethers.getContractFactory("Ticket_City");
     const ticketCity = await TicketCity.deploy();
     await ticketCity.waitForDeployment();
 
-    // Get current timestamp
     const currentTime = await time.latest();
     const startDate = currentTime + time.duration.days(1);
     const endDate = startDate + time.duration.days(7);
 
-    // Setup event parameters
     const eventParams = {
       title: "Test Event",
       desc: "Test Description",
+      imageUri: "ipfs://event-banner",
+      location: "Test Location",
       startDate: startDate,
       endDate: endDate,
       expectedAttendees: 100,
@@ -67,6 +66,25 @@ describe("Ticket_City", () => {
   });
 
   describe("Event Organization", () => {
+    it("Should revert when creating event with empty title or description", async () => {
+      const { ticketCity, organizer, eventParams } = await loadFixture(
+        deployAndSetupFixture
+      );
+
+      await expect(
+        ticketCity.connect(organizer).createEvent(
+          "", // empty title
+          eventParams.desc,
+          eventParams.imageUri,
+          eventParams.location,
+          eventParams.startDate,
+          eventParams.endDate,
+          eventParams.expectedAttendees,
+          eventParams.ticketType
+        )
+      ).to.be.revertedWithCustomError(ticketCity, "EmptyTitleOrDescription");
+    });
+
     it("Should create a free event successfully", async () => {
       const { ticketCity, organizer, eventParams } = await loadFixture(
         deployAndSetupFixture
@@ -78,6 +96,8 @@ describe("Ticket_City", () => {
           .createEvent(
             eventParams.title,
             eventParams.desc,
+            eventParams.imageUri,
+            eventParams.location,
             eventParams.startDate,
             eventParams.endDate,
             eventParams.expectedAttendees,
@@ -102,6 +122,8 @@ describe("Ticket_City", () => {
           .createEvent(
             eventParams.title,
             eventParams.desc,
+            eventParams.imageUri,
+            eventParams.location,
             invalidStartDate,
             eventParams.endDate,
             eventParams.expectedAttendees,
@@ -119,6 +141,8 @@ describe("Ticket_City", () => {
         ticketCity.connect(organizer).createEvent(
           eventParams.title,
           eventParams.desc,
+          eventParams.imageUri,
+          eventParams.location,
           eventParams.startDate,
           eventParams.endDate,
           0, // Invalid expected attendees
@@ -139,22 +163,24 @@ describe("Ticket_City", () => {
         .createEvent(
           eventParams.title,
           eventParams.desc,
+          eventParams.imageUri,
+          eventParams.location,
           eventParams.startDate,
           eventParams.endDate,
           eventParams.expectedAttendees,
           eventParams.ticketType
         );
 
-      // Create free ticket
-      await expect(
-        ticketCity.connect(organizer).createFreeTicket(
+      expect(
+        await ticketCity.connect(organizer).createTicket(
           1, // eventId
-          "ipfs://test-uri"
+          0, // NONE category
+          0,
+          "ipfs://regular-ticket"
         )
       )
         .to.emit(ticketCity, "TicketCreated")
-        .withArgs(1, organizer.address, anyValue, 0, "FREE");
-
+        .withArgs(1, organizer.address, anyValue, 0, "REGULAR");
       // Purchase ticket
       await expect(
         ticketCity.connect(attendee1).purchaseTicket(
@@ -164,6 +190,62 @@ describe("Ticket_City", () => {
       )
         .to.emit(ticketCity, "TicketPurchased")
         .withArgs(1, attendee1.address, 0);
+    });
+
+    it("Should revert when creating free ticket for paid event", async () => {
+      const { ticketCity, organizer, eventParams } = await loadFixture(
+        deployAndSetupFixture
+      );
+
+      // Create paid event
+      const paidEventParams = { ...eventParams, ticketType: 1 }; // PAID
+      await ticketCity
+        .connect(organizer)
+        .createEvent(
+          paidEventParams.title,
+          paidEventParams.desc,
+          paidEventParams.imageUri,
+          paidEventParams.location,
+          paidEventParams.startDate,
+          paidEventParams.endDate,
+          paidEventParams.expectedAttendees,
+          paidEventParams.ticketType
+        );
+
+      // Try to create free ticket
+      await expect(
+        ticketCity
+          .connect(organizer)
+          .createTicket(1, 0, 0, "ipfs://free-ticket") // NONE category
+      ).to.be.revertedWithCustomError(ticketCity, "FreeTicketForFreeEventOnly");
+    });
+
+    // Test for invalid ticket fee
+    it("Should revert when creating paid ticket with zero fee", async () => {
+      const { ticketCity, organizer, eventParams } = await loadFixture(
+        deployAndSetupFixture
+      );
+
+      // Create paid event
+      const paidEventParams = { ...eventParams, ticketType: 1 }; // PAID
+      await ticketCity
+        .connect(organizer)
+        .createEvent(
+          paidEventParams.title,
+          paidEventParams.desc,
+          paidEventParams.imageUri,
+          paidEventParams.location,
+          paidEventParams.startDate,
+          paidEventParams.endDate,
+          paidEventParams.expectedAttendees,
+          paidEventParams.ticketType
+        );
+
+      await expect(
+        ticketCity
+          .connect(organizer)
+          .createTicket(1, 1, 0, "ipfs://regular-ticket") // zero fee
+      ).to.be.revertedWithCustomError(ticketCity, "InvalidTicketFee");
     });
 
     it("Should create and purchase paid tickets", async () => {
@@ -184,6 +266,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -192,10 +276,14 @@ describe("Ticket_City", () => {
 
       // Create regular ticket
       const regularTicketFee = hre.ethers.parseEther("0.1");
-
+      //   uint256 _eventId,
+      //   Types.PaidTicketCategory _category,
+      //   uint256 _ticketFee,
+      //   string memory _ticketUri
       expect(
-        await ticketCity.connect(organizer).createRegularTicket(
+        await ticketCity.connect(organizer).createTicket(
           1, // eventId
+          1, // REGULAR category
           regularTicketFee,
           "ipfs://regular-ticket"
         )
@@ -234,6 +322,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -242,9 +332,12 @@ describe("Ticket_City", () => {
 
       // Create regular ticket
       const regularTicketFee = hre.ethers.parseEther("0.1");
-      await ticketCity
-        .connect(organizer)
-        .createRegularTicket(1, regularTicketFee, "ipfs://regular-ticket");
+      await ticketCity.connect(organizer).createTicket(
+        1, // eventId
+        1, // REGULAR category
+        regularTicketFee,
+        "ipfs://regular-ticket"
+      );
 
       // Try to purchase with incorrect fee
       const incorrectFee = hre.ethers.parseEther("0.05");
@@ -265,6 +358,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -275,7 +370,7 @@ describe("Ticket_City", () => {
       const ticketFee = hre.ethers.parseEther("0.1");
       await ticketCity
         .connect(organizer)
-        .createRegularTicket(1, ticketFee, "ipfs://regular-ticket");
+        .createTicket(1, 1, ticketFee, "ipfs://regular-ticket");
 
       await expect(
         ticketCity.connect(attendee1).purchaseTicket(
@@ -302,6 +397,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -311,8 +408,9 @@ describe("Ticket_City", () => {
       // Create Regular Tickets
       const regularTicketFee = hre.ethers.parseEther("0.1");
 
-      await ticketCity.connect(organizer).createRegularTicket(
+      await ticketCity.connect(organizer).createTicket(
         1, // Event ID
+        1, // Regular
         regularTicketFee,
         "ipfs://regular-ticket"
       );
@@ -351,6 +449,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -360,8 +460,9 @@ describe("Ticket_City", () => {
       // Create VIP Tickets
       const vipTicketFee = hre.ethers.parseEther("0.5");
 
-      await ticketCity.connect(organizer).createVIPTicket(
+      await ticketCity.connect(organizer).createTicket(
         1, // Event ID
+        2, // VIP
         vipTicketFee,
         "ipfs://vip-ticket"
       );
@@ -394,6 +495,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -403,8 +506,9 @@ describe("Ticket_City", () => {
       // Create Regular Tickets
       const regularTicketFee = hre.ethers.parseEther("0.1");
 
-      await ticketCity.connect(organizer).createRegularTicket(
+      await ticketCity.connect(organizer).createTicket(
         1, // Event ID
+        1,
         regularTicketFee,
         "ipfs://regular-ticket"
       );
@@ -429,6 +533,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -450,6 +556,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -486,6 +594,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -495,8 +605,9 @@ describe("Ticket_City", () => {
       // Create Regular Tickets
       const regularTicketFee = hre.ethers.parseEther("0.1");
 
-      await ticketCity.connect(organizer).createRegularTicket(
+      await ticketCity.connect(organizer).createTicket(
         1, // Event ID
+        1, // REGULAR
         regularTicketFee,
         "ipfs://regular-ticket"
       );
@@ -529,6 +640,8 @@ describe("Ticket_City", () => {
         .createEvent(
           eventParams.title,
           eventParams.desc,
+          eventParams.imageUri,
+          eventParams.location,
           eventParams.startDate,
           eventParams.endDate,
           eventParams.expectedAttendees,
@@ -538,7 +651,7 @@ describe("Ticket_City", () => {
       // Create Free Ticket
       await ticketCity
         .connect(organizer)
-        .createFreeTicket(1, "ipfs://test-uri");
+        .createTicket(1, 0, 0, "ipfs://test-uri");
 
       // Log the Free Ticket NFT Address
       const eventDetails = await ticketCity.events(1);
@@ -564,6 +677,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -575,8 +690,9 @@ describe("Ticket_City", () => {
       const vipTicketFee = hre.ethers.parseEther("0.5");
 
       await expect(
-        ticketCity.connect(organizer).createRegularTicket(
+        ticketCity.connect(organizer).createTicket(
           1, // Event ID
+          1, // REGULAR
           regularTicketFee,
           "ipfs://regular-ticket"
         )
@@ -585,8 +701,9 @@ describe("Ticket_City", () => {
         .withArgs(1, organizer.address, anyValue, regularTicketFee, "REGULAR");
 
       await expect(
-        ticketCity.connect(organizer).createVIPTicket(
+        ticketCity.connect(organizer).createTicket(
           1, // Event ID
+          2, // VIP
           vipTicketFee,
           "ipfs://vip-ticket"
         )
@@ -648,6 +765,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -657,8 +776,9 @@ describe("Ticket_City", () => {
       // Create Regular Tickets
       const regularTicketFee = hre.ethers.parseEther("0.1");
 
-      await ticketCity.connect(organizer).createRegularTicket(
+      await ticketCity.connect(organizer).createTicket(
         1, // Event ID
+        1, // REGULAR
         regularTicketFee,
         "ipfs://regular-ticket"
       );
@@ -703,6 +823,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -712,8 +834,9 @@ describe("Ticket_City", () => {
       // Create VIP Tickets
       const vipTicketFee = hre.ethers.parseEther("0.5");
 
-      await ticketCity.connect(organizer).createVIPTicket(
+      await ticketCity.connect(organizer).createTicket(
         1, // Event ID
+        2,
         vipTicketFee,
         "ipfs://vip-ticket"
       );
@@ -752,6 +875,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -761,8 +886,9 @@ describe("Ticket_City", () => {
       // Create Regular Tickets
       const regularTicketFee = hre.ethers.parseEther("0.1");
 
-      await ticketCity.connect(organizer).createRegularTicket(
-        1, // Event ID
+      await ticketCity.connect(organizer).createTicket(
+        1, // Event ID,
+        1, // REGULAR
         regularTicketFee,
         "ipfs://regular-ticket"
       );
@@ -802,6 +928,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -831,6 +959,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -840,8 +970,9 @@ describe("Ticket_City", () => {
       // Create Regular Tickets
       const regularTicketFee = hre.ethers.parseEther("0.1");
 
-      await ticketCity.connect(organizer).createRegularTicket(
+      await ticketCity.connect(organizer).createTicket(
         1, // Event ID
+        1,
         regularTicketFee,
         "ipfs://regular-ticket"
       );
@@ -889,6 +1020,8 @@ describe("Ticket_City", () => {
       await ticketCity.connect(organizer).createEvent(
         eventParams.title,
         eventParams.desc,
+        eventParams.imageUri,
+        eventParams.location,
         eventParams.startDate,
         eventParams.endDate,
         eventParams.expectedAttendees,
@@ -899,7 +1032,7 @@ describe("Ticket_City", () => {
       const ticketFee = hre.ethers.parseEther("0.1");
       await ticketCity
         .connect(organizer)
-        .createRegularTicket(1, ticketFee, "ipfs://test-uri");
+        .createTicket(1, 1, ticketFee, "ipfs://test-uri");
       await ticketCity
         .connect(attendee1)
         .purchaseTicket(1, 1, { value: ticketFee });
