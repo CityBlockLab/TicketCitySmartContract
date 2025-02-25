@@ -6,6 +6,7 @@ import "./Ticket_NFT.sol";
 import "./libraries/Types.sol";
 import "./libraries/Errors.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Multicall.sol";
 
 /**
  * @dev Implementation of a decentralized ticketing system for events.
@@ -21,7 +22,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  * - Attendance verification system
  * - Revenue release mechanism with attendance thresholds
  */
-contract Ticket_City is ReentrancyGuard {
+contract Ticket_City is Multicall, ReentrancyGuard {
     using Types for *;
     using Errors for *;
 
@@ -69,7 +70,7 @@ contract Ticket_City is ReentrancyGuard {
      */
     event EventOrganized(
         address indexed _organiser,
-        uint256 _eventId,
+        uint256 indexed _eventId,
         Types.TicketType _ticketType
     );
 
@@ -89,7 +90,7 @@ contract Ticket_City is ReentrancyGuard {
      */
     event TicketPurchased(
         uint256 indexed _eventId,
-        address _buyer,
+        address indexed _buyer,
         uint256 _ticketFee
     );
 
@@ -190,7 +191,7 @@ contract Ticket_City is ReentrancyGuard {
         uint256 _endDate,
         uint256 _expectedAttendees,
         Types.TicketType _ticketType
-    ) external {
+    ) external returns (uint256) {
         // Input validation
         if (msg.sender == address(0)) revert Errors.AddressZeroDetected();
         if (bytes(_title).length == 0 || bytes(_desc).length == 0)
@@ -230,6 +231,8 @@ contract Ticket_City is ReentrancyGuard {
         allEvents.push(eventDetails);
 
         emit EventOrganized(msg.sender, eventId, _ticketType);
+
+        return eventId;
     }
 
     function createTicket(
@@ -759,5 +762,3 @@ contract Ticket_City is ReentrancyGuard {
         }
     }
 }
-
-// https://gateway.pinata.cloud/ipfs/QmTXNQNNhFkkpCaCbHDfzbUCjXQjQnhX7QFoX1YVRQCSC8
