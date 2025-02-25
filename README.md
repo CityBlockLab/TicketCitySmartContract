@@ -3,25 +3,20 @@
 'Ticket_City contract successfully deployed to': '0x6fd1F53799bC0312a98C36eBA030d3aA7B68264f'
 
 ## Smart Contract Architecture
-
 ### Core Components
-
 1. `Ticket_City.sol`: Main contract handling event logic and XFI payments
 2. `Ticket_NFT.sol`: Non-transferable NFT implementation for event tickets
 3. `Types.sol`: Data structures and enums
 4. `Errors.sol`: Custom error definitions
 
 #### Security Measures
-
 - NonReentrant guard for payment functions
 - Event organizer verification
 - Minimum attendance rate requirements
 - Revenue release conditions
 
 ### Smart Contract Interactions
-
 #### Event Creation Flow
-
 ```mermaid
 graph TD
     A[Organizer] -->|Creates Event| B[Ticket_City Contract]
@@ -32,7 +27,6 @@ graph TD
 ```
 
 #### Ticket Purchase Flow
-
 ```mermaid
 graph TD
     A[Attendee] -->|Sends XFI| B[Ticket_City Contract]
@@ -64,8 +58,23 @@ graph TD
 - Ticket payments held safely until the event ends
 - If an event is canceled, attendees get a refund plus a 2 XFI gas fee compensation from the organiser (Future Implementation)
 
-### Revenue Management
+### Key Features Implementations
+- Event creation with flexible ticket types (FREE/PAID)
+- Ticket categories: Regular and VIP for paid events
+- Revenue management through XFI native token
+- Attendance tracking and verification system
+- Tickets issued as NFTs for security
+- Automated ticket pricing based on demand (Future Implementation)
+- Event discovery tools, including referral programs and discount codes (Future Implementation)
+- Stablecoins payment (Future Implementation)
 
+### Payments & Refunds
+- Tickets purchased using XFI
+- Organizers pay a small platform service fee (30 XFI) for paid events
+- Ticket payments held safely until the event ends
+- If an event is canceled, attendees get a refund plus a 2 XFI gas fee compensation from the organiser (Future Implementation)
+
+### Revenue Management
 - XFI payments held in contract
 - 60% minimum attendance requirement
 - Automated revenue release post-event
@@ -80,12 +89,10 @@ graph TD
 - Revenue release conditions
 
 ## Contract Constants
-
 - `FREE_TICKET_PRICE`: 0 XFI
 - `MINIMUM_ATTENDANCE_RATE`: 60%
 
 ## Error Handling
-
 - Custom errors for gas optimization
 - Comprehensive validation checks
 - Secure payment processing
@@ -131,8 +138,6 @@ npx hardhat node
 ## Contributing Guidelines
 
 ### Issue Management
-
-1. **Creating Issues**
 
    - Use provided issue templates
    - Tag with appropriate labels
@@ -222,4 +227,7 @@ For additional support or questions:
 
 ## All tests passed
 <img width="634" alt="tickect_city_test" src="https://github.com/user-attachments/assets/d1763712-6829-4711-b00d-3486a8f90ecc" />
+
+
+## License
 
